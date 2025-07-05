@@ -2,7 +2,10 @@
 在网页端录制视频并上传，然后利用ai分析视频中的操作生成脚本
 
 # 环境搭建
-
+运行以下命令即可
+```Python
+pip install -r requirements.txt
+```
 
 # 如何食用？
 * Step1 打开终端  
