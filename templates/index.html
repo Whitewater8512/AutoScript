@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoScript - 视频操作转Python脚本</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        danger: '#F87272',
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .backdrop-blur {
+                backdrop-filter: blur(8px);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-code text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-primary">AutoScript</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#" class="text-gray-700 hover:text-primary transition-all-300">首页</a></li>
+                    <li><a href="#" class="text-gray-700 hover:text-primary transition-all-300">文档</a></li>
+                    <li><a href="#" class="text-gray-700 hover:text-primary transition-all-300">关于</a></li>
+                </ul>
+            </nav>
+            <button class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg shadow-md transition-all-300 flex items-center">
+                <i class="fa fa-github mr-2"></i> GitHub
+            </button>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <section class="mb-12">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-dark mb-4 text-shadow">
+                从视频操作生成Python自动化脚本
+            </h2>
+            <p class="text-gray-600 text-lg mb-8 max-w-3xl">
+                录制您的网页操作，我们的AI将自动分析视频并生成可执行的Python脚本，用于自动化测试、RPA流程和更多场景。
+            </p>
+        </section>
+
+        <!-- 主要功能区 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- 左侧控制面板 -->
+            <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-sliders text-primary mr-2"></i> 控制面板
+                </h3>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold mb-3 text-gray-700">1. 录制选项</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="recordScreen" class="form-checkbox h-5 w-5 text-primary rounded border-gray-300 focus:ring-primary" checked>
+                            <label for="recordScreen" class="ml-2 text-gray-700">录制屏幕</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="recordMouse" class="form-checkbox h-5 w-5 text-primary rounded border-gray-300 focus:ring-primary" checked>
+                            <label for="recordMouse" class="ml-2 text-gray-700">录制鼠标</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="recordAudio" class="form-checkbox h-5 w-5 text-primary rounded border-gray-300 focus:ring-primary">
+                            <label for="recordAudio" class="ml-2 text-gray-700">录制音频</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h4 class="font-semibold mb-3 text-gray-700">2. 脚本选项</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="scriptType" class="block text-gray-700 mb-1">脚本类型</label>
+                            <select id="scriptType" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 transition-all-300">
+                                <option value="playwright">Playwright</option>
+                                <option value="selenium">Selenium</option>
+                                <option value="custom">自定义模板</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="scriptQuality" class="block text-gray-700 mb-1">脚本质量</label>
+                            <select id="scriptQuality" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/20 transition-all-300">
+                                <option value="basic">基础 (快速)</option>
+                                <option value="standard" selected>标准 (推荐)</option>
+                                <option value="advanced">高级 (含断言)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="startRecordBtn" class="flex-1 bg-primary hover:bg-primary/90 text-white px-4 py-3 rounded-lg shadow-md transition-all-300 flex items-center justify-center">
+                        <i class="fa fa-circle text-red-500 mr-2"></i> 开始录制
+                    </button>
+                    <button id="stopRecordBtn" class="flex-1 bg-danger hover:bg-danger/90 text-white px-4 py-3 rounded-lg shadow-md transition-all-300 flex items-center justify-center" disabled>
+                        <i class="fa fa-stop mr-2"></i> 停止录制
+                    </button>
+                </div>
+            </div>
+
+            <!-- 中间视频预览区 -->
+            <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-video-camera text-primary mr-2"></i> 视频预览
+                </h3>
+                
+                <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
+                    <video id="previewVideo" class="w-full h-full object-contain" autoplay muted></video>
+                    
+                    <!-- 初始状态提示 -->
+                    <div id="initialState" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80 text-white">
+                        <i class="fa fa-film text-5xl mb-4 text-gray-400"></i>
+                        <p class="text-lg text-center px-6">点击"开始录制"按钮开始您的操作演示</p>
+                    </div>
+                    
+                    <!-- 录制中提示 -->
+                    <div id="recordingState" class="absolute inset-0 flex items-center justify-center bg-gray-900/50 text-white hidden">
+                        <div class="flex items-center bg-black/70 backdrop-blur px-4 py-2 rounded-full">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                            <span class="font-medium">录制中...</span>
+                            <span id="recordingTime" class="ml-2">00:00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <div class="text-sm text-gray-500">
+                        <span id="videoSize">0 MB</span> | 
+                        <span id="videoDuration">00:00</span>
+                    </div>
+                    <button id="uploadBtn" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-lg shadow-md transition-all-300 flex items-center" disabled>
+                        <i class="fa fa-cloud-upload mr-2"></i> 上传分析
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧代码预览区 -->
+            <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-code text-primary mr-2"></i> 生成的Python脚本
+                </h3>
+                
+                <div class="bg-gray-900 text-gray-100 rounded-lg p-4 mb-4 h-[300px] overflow-auto">
+                    <pre id="generatedCode" class="font-mono text-sm">
+# 生成的Python脚本将显示在这里
+# 录制您的操作并上传视频后，系统将自动分析并生成相应的自动化脚本
+
+# 示例脚本 (使用Playwright)
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=False)
+    page = browser.new_page()
+    page.goto("https://example.com")
+    
+    # 操作将自动转换为代码
+    page.click("text=登录")
+    page.fill("input[name='username']", "your_username")
+    page.fill("input[name='password']", "your_password")
+    page.click("button:has-text('提交')")
+    
+    # 验证登录成功
+    assert page.is_visible("text=欢迎回来")
+    
+    browser.close()
+                    </pre>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="downloadBtn" class="flex-1 bg-dark hover:bg-dark/90 text-white px-4 py-2 rounded-lg shadow-md transition-all-300 flex items-center justify-center" disabled>
+                        <i class="fa fa-download mr-2"></i> 下载脚本
+                    </button>
+                    <button id="copyBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md transition-all-300 flex items-center justify-center" disabled>
+                        <i class="fa fa-copy mr-2"></i> 复制代码
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析结果 -->
+        <section class="mt-12 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-6 flex items-center">
+                <i class="fa fa-bar-chart text-primary mr-2"></i> 操作分析结果
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-primary">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-semibold text-gray-700">总操作数</h4>
+                        <span class="text-primary text-2xl font-bold" id="totalActions">0</span>
+                    </div>
+                    <div class="text-sm text-gray-500">检测到的用户交互动作</div>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-4 border-l-4 border-secondary">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-semibold text-gray-700">脚本覆盖率</h4>
+                        <span class="text-secondary text-2xl font-bold" id="scriptCoverage">0%</span>
+                    </div>
+                    <div class="text-sm text-gray-500">成功转换为代码的操作比例</div>
+                </div>
+                
+                <div class="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-semibold text-gray-700">处理时间</h4>
+                        <span class="text-orange-500 text-2xl font-bold" id="processingTime">0s</span>
+                    </div>
+                    <div class="text-sm text-gray-500">视频分析和脚本生成耗时</div>
+                </div>
+            </div>
+            
+            <div class="h-64">
+                <canvas id="actionChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 使用说明 -->
+        <section class="mt-12 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i> 使用说明
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-4 rounded-lg bg-gray-50">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-video-camera text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2">1. 录制操作</h4>
+                    <p class="text-gray-600">点击"开始录制"按钮，授权访问您的屏幕和鼠标，然后在浏览器中执行您想要自动化的操作。</p>
+                </div>
+                
+                <div class="p-4 rounded-lg bg-gray-50">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-cloud-upload text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2">2. 上传分析</h4>
+                    <p class="text-gray-600">录制完成后，点击"上传分析"按钮，系统将处理视频并识别您的操作，包括点击、输入和导航。</p>
+                </div>
+                
+                <div class="p-4 rounded-lg bg-gray-50">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa fa-code text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-lg mb-2">3. 使用脚本</h4>
+                    <p class="text-gray-600">系统将生成对应的Python脚本，您可以下载或复制代码，然后在自己的项目中运行自动化测试或流程。</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-code text-primary text-2xl"></i>
+                        <h2 class="text-xl font-bold">AutoScript</h2>
+                    </div>
+                    <p class="text-gray-400 mb-4">
+                        智能视频操作转Python脚本工具，提升自动化测试效率。
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-all-300">
+                            <i class="fa fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-all-300">
+                            <i class="fa fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-all-300">
+                            <i class="fa fa-linkedin text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">产品</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">功能</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">定价</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">集成</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">更新日志</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">资源</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">文档</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">教程</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">API参考</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">社区</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">公司</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">关于我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">联系我们</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">隐私政策</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-all-300">服务条款</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>&copy; 2025 AutoScript. 保留所有权利。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化变量
+            let mediaRecorder;
+            let recordedChunks = [];
+            let recordingStartTime;
+            let recordingTimer;
+            let recordedBlob = null;
+            
+            // 获取DOM元素
+            const startRecordBtn = document.getElementById('startRecordBtn');
+            const stopRecordBtn = document.getElementById('stopRecordBtn');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const previewVideo = document.getElementById('previewVideo');
+            const initialState = document.getElementById('initialState');
+            const recordingState = document.getElementById('recordingState');
+            const recordingTime = document.getElementById('recordingTime');
+            const videoSize = document.getElementById('videoSize');
+            const videoDuration = document.getElementById('videoDuration');
+            const generatedCode = document.getElementById('generatedCode');
+            const totalActions = document.getElementById('totalActions');
+            const scriptCoverage = document.getElementById('scriptCoverage');
+            const processingTime = document.getElementById('processingTime');
+            
+            // 开始录制按钮点击事件
+            startRecordBtn.addEventListener('click', async function() {
+                try {
+                    // 获取屏幕录制权限
+                    const stream = await navigator.mediaDevices.getDisplayMedia({
+                        video: true,
+                        audio: document.getElementById('recordAudio').checked
+                    });
+                    
+                    // 显示预览视频
+                    previewVideo.srcObject = stream;
+                    initialState.classList.add('hidden');
+                    recordingState.classList.remove('hidden');
+                    
+                    // 开始录制
+                    recordedChunks = [];
+                    mediaRecorder = new MediaRecorder(stream);
+                    
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    };
+                    
+                    mediaRecorder.onstop = function() {
+                        // 创建录制的视频Blob
+                        recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                        
+                        // 更新视频预览
+                        previewVideo.src = URL.createObjectURL(recordedBlob);
+                        previewVideo.controls = true;
+                        
+                        // 更新视频信息
+                        videoSize.textContent = (recordedBlob.size / (1024 * 1024)).toFixed(2) + ' MB';
+                        
+                        // 计算视频时长
+                        previewVideo.onloadedmetadata = function() {
+                            const duration = previewVideo.duration;
+                            const minutes = Math.floor(duration / 60);
+                            const seconds = Math.floor(duration % 60);
+                            videoDuration.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        };
+                        
+                        // 启用上传按钮
+                        uploadBtn.disabled = false;
+                        
+                        // 重置UI状态
+                        recordingState.classList.add('hidden');
+                        startRecordBtn.disabled = false;
+                        stopRecordBtn.disabled = true;
+                        
+                        // 停止预览流
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    // 开始录制并计时
+                    mediaRecorder.start();
+                    recordingStartTime = Date.now();
+                    startRecordingTimer();
+                    
+                    // 更新按钮状态
+                    startRecordBtn.disabled = true;
+                    stopRecordBtn.disabled = false;
+                } catch (error) {
+                    console.error('录制失败:', error);
+                    alert('无法开始录制，请确保您已授予屏幕录制权限。');
+                }
+            });
+            
+            // 停止录制按钮点击事件
+            stopRecordBtn.addEventListener('click', function() {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                    clearInterval(recordingTimer);
+                }
+            });
+            
+            // 上传按钮点击事件
+            uploadBtn.addEventListener('click', function() {
+                if (!recordedBlob) return;
+                
+                // 模拟上传和处理过程
+                uploadBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 处理中...';
+                uploadBtn.disabled = true;
+                
+                // 模拟API调用
+                setTimeout(() => {
+                    // 更新分析结果
+                    totalActions.textContent = Math.floor(Math.random() * 10) + 5;
+                    scriptCoverage.textContent = (Math.random() * 20 + 80).toFixed(0) + '%';
+                    processingTime.textContent = (Math.random() * 5 + 5).toFixed(1) + 's';
+                    
+                    // 生成随机代码
+                    generateSampleCode();
+                    
+                    // 启用下载和复制按钮
+                    downloadBtn.disabled = false;
+                    copyBtn.disabled = false;
+                    
+                    // 重置按钮状态
+                    uploadBtn.innerHTML = '<i class="fa fa-cloud-upload mr-2"></i> 上传分析';
+                    
+                    // 创建操作类型图表
+                    createActionChart();
+                    
+                    // 显示成功消息
+                    showNotification('success', '视频分析完成！已成功生成Python脚本。');
+                }, 3000);
+            });
+            
+            // 下载按钮点击事件
+            downloadBtn.addEventListener('click', function() {
+                const code = generatedCode.textContent;
+                const blob = new Blob([code], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'automation_script.py';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('info', 'Python脚本已下载！');
+            });
+            
+            // 复制按钮点击事件
+            copyBtn.addEventListener('click', function() {
+                const textarea = document.createElement('textarea');
+                textarea.value = generatedCode.textContent;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                showNotification('info', '代码已复制到剪贴板！');
+            });
+            
+            // 录制计时器
+            function startRecordingTimer() {
+                recordingTime.textContent = '00:00';
+                recordingTimer = setInterval(() => {
+                    const elapsedTime = Math.floor((Date.now() - recordingStartTime) / 1000);
+                    const minutes = Math.floor(elapsedTime / 60);
+                    const seconds = elapsedTime % 60;
+                    recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+            
+            // 生成示例代码
+            function generateSampleCode() {
+                const scriptType = document.getElementById('scriptType').value;
+                let code = '';
+                
+                if (scriptType === 'playwright') {
+                    code = generatePlaywrightCode();
+                } else if (scriptType === 'selenium') {
+                    code = generateSeleniumCode();
+                } else {
+                    code = generateCustomCode();
+                }
+                
+                generatedCode.textContent = code;
+            }
+            
+            // 生成Playwright代码
+            function generatePlaywrightCode() {
+                const actions = [
+                    { type: 'goto', url: 'https://example.com' },
+                    { type: 'click', selector: 'text=登录' },
+                    { type: 'fill', selector: 'input[name="username"]', value: 'your_username' },
+                    { type: 'fill', selector: 'input[name="password"]', value: 'your_password' },
+                    { type: 'click', selector: 'button:has-text("提交")' },
+                    { type: 'waitForSelector', selector: 'text=欢迎回来' },
+                    { type: 'click', selector: 'text=产品列表' },
+                    { type: 'screenshot', path: 'screenshot.png' }
+                ];
+                
+                let code = `from playwright.sync_api import sync_playwright\n\n`;
+                code += `with sync_playwright() as p:\n`;
+                code += `    browser = p.chromium.launch(headless=False)\n`;
+                code += `    page = browser.new_page()\n\n`;
+                
+                actions.forEach(action => {
+                    if (action.type === 'goto') {
+                        code += `    page.goto("${action.url}")\n`;
+                    } else if (action.type === 'click') {
+                        code += `    page.click("${action.selector}")\n`;
+                    } else if (action.type === 'fill') {
+                        code += `    page.fill("${action.selector}", "${action.value}")\n`;
+                    } else if (action.type === 'waitForSelector') {
+                        code += `    page.wait_for_selector("${action.selector}")\n`;
+                    } else if (action.type === 'screenshot') {
+                        code += `    page.screenshot(path="${action.path}")\n`;
+                    }
+                });
+                
+                code += `\n    # 验证登录成功`;
+                code += `\n    assert page.is_visible("text=欢迎回来")\n\n`;
+                code += `    browser.close()`;
+                
+                return code;
+            }
+            
+            // 生成Selenium代码
+            function generateSeleniumCode() {
+                const actions = [
+                    { type: 'goto', url: 'https://example.com' },
+                    { type: 'click', selector: '登录' },
+                    { type: 'fill', selector: 'name=username', value: 'your_username' },
+                    { type: 'fill', selector: 'name=password', value: 'your_password' },
+                    { type: 'click', selector: 'xpath=//button[contains(text(),"提交")]' },
+                    { type: 'waitForElement', selector: '欢迎回来' },
+                    { type: 'click', selector: '产品列表' },
+                    { type: 'screenshot', path: 'screenshot.png' }
+                ];
+                
+                let code = `from selenium import webdriver\n`;
+                code += `from selenium.webdriver.common.by import By\n`;
+                code += `from selenium.webdriver.support.ui import WebDriverWait\n`;
+                code += `from selenium.webdriver.support import expected_conditions as EC\n\n`;
+                code += `driver = webdriver.Chrome()\n\n`;
+                
+                actions.forEach(action => {
+                    if (action.type === 'goto') {
+                        code += `driver.get("${action.url}")\n`;
+                    } else if (action.type === 'click') {
+                        code += `element = WebDriverWait(driver, 10).until(\n`;
+                        code += `    EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), '${action.selector}')]"))\n`;
+                        code += `)\n`;
+                        code += `element.click()\n`;
+                    } else if (action.type === 'fill') {
+                        code += `element = WebDriverWait(driver, 10).until(\n`;
+                        code += `    EC.presence_of_element_located((By.NAME, "${action.selector}"))\n`;
+                        code += `)\n`;
+                        code += `element.send_keys("${action.value}")\n`;
+                    } else if (action.type === 'waitForElement') {
+                        code += `WebDriverWait(driver, 10).until(\n`;
+                        code += `    EC.presence_of_element_located((By.XPATH, "//*[contains(text(), '${action.selector}')]"))\n`;
+                        code += `)\n`;
+                    } else if (action.type === 'screenshot') {
+                        code += `driver.save_screenshot("${action.path}")\n`;
+                    }
+                });
+                
+                code += `\n# 验证登录成功`;
+                code += `\nassert "欢迎回来" in driver.page_source\n\n`;
+                code += `driver.quit()`;
+                
+                return code;
+            }
+            
+            // 生成自定义代码
+            function generateCustomCode() {
+                return `# 自定义模板代码\n# 您可以根据自己的需求修改此模板\n\n` + 
+                       `def run_automation():\n` + 
+                       `    # 初始化浏览器\n` + 
+                       `    browser = initialize_browser()\n\n` + 
+                       `    # 导航到目标页面\n` + 
+                       `    navigate_to(browser, "https://example.com")\n\n` + 
+                       `    # 执行操作\n` + 
+                       `    click_element(browser, "登录")\n` + 
+                       `    fill_input(browser, "用户名", "your_username")\n` + 
+                       `    fill_input(browser, "密码", "your_password")\n` + 
+                       `    click_element(browser, "提交")\n\n` + 
+                       `    # 验证结果\n` + 
+                       `    assert check_element_exists(browser, "欢迎回来"), "登录失败"\n\n` + 
+                       `    # 清理资源\n` + 
+                       `    close_browser(browser)\n\n` + 
+                       `if __name__ == "__main__":\n` + 
+                       `    run_automation()`;
+            }
+            
+            // 创建操作类型图表
+            function createActionChart() {
+                const ctx = document.getElementById('actionChart').getContext('2d');
+                
+                // 销毁现有图表
+                if (window.actionChart) {
+                    window.actionChart.destroy();
+                }
+                
+                // 创建新图表
+                window.actionChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['点击', '输入', '导航', '滚动', '等待', '选择', '其他'],
+                        datasets: [{
+                            label: '操作数量',
+                            data: [
+                                Math.floor(Math.random() * 6) + 2,
+                                Math.floor(Math.random() * 4) + 1,
+                                Math.floor(Math.random() * 3) + 1,
+                                Math.floor(Math.random() * 2) + 1,
+                                Math.floor(Math.random() * 2) + 1,
+                                Math.floor(Math.random() * 2),
+                                Math.floor(Math.random() * 2)
+                            ],
+                            backgroundColor: [
+                                'rgba(22, 93, 255, 0.7)',
+                                'rgba(54, 211, 153, 0.7)',
+                                'rgba(249, 115, 22, 0.7)',
+                                'rgba(16, 185, 129, 0.7)',
+                                'rgba(99, 102, 241, 0.7)',
+                                'rgba(236, 72, 153, 0.7)',
+                                'rgba(156, 39, 176, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(22, 93, 255, 1)',
+                                'rgba(54, 211, 153, 1)',
+                                'rgba(249, 115, 22, 1)',
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(99, 102, 241, 1)',
+                                'rgba(236, 72, 153, 1)',
+                                'rgba(156, 39, 176, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 显示通知
+            function showNotification(type, message) {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 transform translate-x-full`;
+                
+                if (type === 'success') {
+                    notification.classList.add('bg-green-50', 'text-green-800', 'border-l-4', 'border-green-400');
+                    notification.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fa fa-check-circle text-green-500 mr-3 text-xl"></i>
+                            <span>${message}</span>
+                        </div>
+                    `;
+                } else if (type === 'info') {
+                    notification.classList.add('bg-blue-50', 'text-blue-800', 'border-l-4', 'border-blue-400');
+                    notification.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fa fa-info-circle text-blue-500 mr-3 text-xl"></i>
+                            <span>${message}</span>
+                        </div>
+                    `;
+                } else if (type === 'error') {
+                    notification.classList.add('bg-red-50', 'text-red-800', 'border-l-4', 'border-red-400');
+                    notification.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fa fa-exclamation-circle text-red-500 mr-3 text-xl"></i>
+                            <span>${message}</span>
+                        </div>
+                    `;
+                }
+                
+                document.body.appendChild(notification);
+                
+                // 显示通知
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+                
+                // 自动关闭
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
+    
