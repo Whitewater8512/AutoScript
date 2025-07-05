@@ -1,5 +1,6 @@
 # AutoScript
 在网页端录制视频并上传，然后利用ai分析视频中的操作生成脚本
+![1751728508327](https://github.com/user-attachments/assets/2cab87c5-6a4a-4d73-abd1-d7d98d357707)
 
 # 环境搭建
 本项目Python环境为3.9  
@@ -11,5 +12,8 @@ pip install -r requirements.txt
 # 如何食用？
 * Step1 打开终端  
 * Step2 cd到AutoScript目录下  
-* Step3 使用python manage.py runserver运行代码  
-* Step4 在打印的输出中通过"Ctrl+点击"的方式打开网页链接~  
+* Step3 使用以下命令运行代码  
+  ```bash
+  python manage.py runserver
+  ```
+* Step4 通过"Ctrl+点击"的方式打开终端输出网页链接即可~  
